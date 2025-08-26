@@ -1,5 +1,6 @@
 package com.bookmyturf.service;
 
+import com.bookmyturf.entity.Category;
 import com.bookmyturf.entity.Location;
 import com.bookmyturf.entity.LocationMedia;
 import com.bookmyturf.models.LocationDTO;
@@ -12,4 +13,6 @@ public interface LocationService {
     void deleteLocation(Long id);
     LocationDTO getLocationById(Long id);
     List<Location> getAllLocationsByAdmin();
+
+    Category addCategoryToLocation(Long locationId,String Name);
 }

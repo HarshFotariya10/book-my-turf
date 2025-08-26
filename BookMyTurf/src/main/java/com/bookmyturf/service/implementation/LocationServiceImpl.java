@@ -1,8 +1,10 @@
 package com.bookmyturf.service.implementation;
 
+import com.bookmyturf.entity.Category;
 import com.bookmyturf.entity.Location;
 import com.bookmyturf.entity.LocationMedia;
 import com.bookmyturf.entity.User;
+import com.bookmyturf.jparepository.CategoryRepository;
 import com.bookmyturf.jparepository.LocationMediaRepository;
 import com.bookmyturf.jparepository.LocationRepository;
 import com.bookmyturf.jparepository.UserJpaRepository;
@@ -28,6 +30,9 @@ public class LocationServiceImpl  implements LocationService {
     private  UserJpaRepository userRepo;
 
     @Autowired
+    private CategoryRepository categoryRepository;
+
+    @Autowired
     private LocationMediaRepository locationMediaRepository;
 
     @Override
@@ -46,6 +51,7 @@ public class LocationServiceImpl  implements LocationService {
         location.setState(dto.getState());
         location.setPincode(dto.getPincode());
         location.setAdmin(admin);
+        location.setCategories(new ArrayList<>());
 
         List<LocationMedia> mediaList = new ArrayList<>();
         if (dto.getMediaFiles() != null) {
@@ -156,6 +162,20 @@ public class LocationServiceImpl  implements LocationService {
             }
         }
         return locations;
+    }
+    @Override
+    @PreAuthorize("hasAuthority('ADMIN') or hasAuthority('SUPER_ADMIN')")
+    public Category addCategoryToLocation(Long locationId, String categoryName) {
+        Location location = locationRepo.findById(locationId)
+                .orElseThrow(() -> new EntityNotFoundException("Location not found"));
+
+        Category category = new Category();
+        category.setName(categoryName);
+        category.setLocation(location);
+
+        location.getCategories().add(category);
+
+        return categoryRepository.save(category);
     }
 
 }

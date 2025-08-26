@@ -91,5 +91,21 @@ public class LocationController {
         List<Location> locations = locationService.getAllLocationsByAdmin();
         return GlobalExceptionHandler.GoodResponse(HttpStatus.OK, "Locations fetched", locations);
     }
+    @Operation(summary = "Add Category to a Location",
+            description = "Adds a new category under a specific location.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Category added successfully",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = com.bookmyturf.entity.Category.class))),
+            @ApiResponse(responseCode = "404", description = "Location not found")
+    })
+    @PreAuthorize("hasAuthority('ADMIN') or hasAuthority('SUPER_ADMIN')")
+    @PostMapping("/{locationId}/category")
+    public ResponseEntity<?> addCategoryToLocation(@PathVariable Long locationId,
+                                                   @RequestParam String categoryName) {
+        var category = locationService.addCategoryToLocation(locationId, categoryName);
+        return GlobalExceptionHandler.GoodResponse(HttpStatus.CREATED, "Category added successfully", category);
+    }
+
 
 }

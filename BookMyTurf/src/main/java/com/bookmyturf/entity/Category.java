@@ -16,6 +16,10 @@ public class Category {
 
     private String name;
 
+    @ManyToOne
+    @JoinColumn(name = "location_id")
+    private Location location;
+
     @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Sports> sports;
 
