@@ -1,0 +1,16 @@
+# IntelliJ
+.idea/
+*.iml
+
+# Compiled class files
+*.class
+
+# Maven / Gradle build
+target/
+build/
+
+# Logs
+*.log
+
+# Local config (don’t push secrets)
+src/main/resources/application.properties
