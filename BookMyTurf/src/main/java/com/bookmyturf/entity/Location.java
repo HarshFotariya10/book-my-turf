@@ -32,6 +32,9 @@ public class Location {
 
 
     @OneToMany(mappedBy = "location", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Category> categories = new ArrayList<>();
+
+    @OneToMany(mappedBy = "location", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
     private List<LocationMedia> mediaFiles = new ArrayList<>();
 
