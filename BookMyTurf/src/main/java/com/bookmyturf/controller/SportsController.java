@@ -56,4 +56,19 @@ public class SportsController {
         );
     }
 
+    @Operation(summary = "Fetch all sports by city and category")
+    @GetMapping("/by-city-category")
+    public ResponseEntity<?> getSportsByCityAndCategory(
+            @RequestParam String city,
+            @RequestParam String categoryName) {
+
+        List<SportResponseDTO> sports = sportsService.getSportsByCityAndCategory(city, categoryName);
+
+        return GlobalExceptionHandler.GoodResponse(
+                HttpStatus.OK,
+                "Sports fetched successfully for city: " + city + " and category: " + categoryName,
+                sports
+        );
+    }
+
 }
