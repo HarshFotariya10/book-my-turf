@@ -38,7 +38,6 @@ public class SecurityConfig {
         return http
                 .cors(cors -> cors.configurationSource(request -> {
                     var corsConfig = new org.springframework.web.cors.CorsConfiguration();
-
                     corsConfig.setAllowedOriginPatterns(List.of("*")); // allow all origins
                     corsConfig.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
                     corsConfig.setAllowedHeaders(List.of("*"));
@@ -47,15 +46,24 @@ public class SecurityConfig {
                 }))
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                        // public APIs
+                        .requestMatchers("/api/auth/**", "/swagger-ui/**", "/v3/api-docs/**","/api/search/**").permitAll()
+
+                        // ✅ allow all GET APIs without authentication
+                        .requestMatchers(HttpMethod.GET, "/**").permitAll()
+                        // role-based access for other methods
                         .requestMatchers(HttpMethod.POST, "/api/admin/**").hasAnyAuthority("ADMIN", "SUPER_ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/api/users/**").hasAnyAuthority("USER", "ADMIN", "SUPER_ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/admin/**").hasAnyAuthority("ADMIN", "SUPER_ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/admin/**").hasAnyAuthority("ADMIN", "SUPER_ADMIN")
+
+                        // everything else must be authenticated
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtAuthFilter(), UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
+
 
     @Bean
     public OncePerRequestFilter jwtAuthFilter() {
