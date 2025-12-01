@@ -55,7 +55,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/admin/**").hasAnyAuthority("ADMIN", "SUPER_ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/admin/**").hasAnyAuthority("ADMIN", "SUPER_ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/admin/**").hasAnyAuthority("ADMIN", "SUPER_ADMIN")
-
+                        .requestMatchers(HttpMethod.POST,"/api/bookings/**").hasAnyAuthority("ADMIN","USER")
                         // everything else must be authenticated
                         .anyRequest().authenticated()
                 )

@@ -30,7 +30,7 @@ public class BookingController {
                     @ApiResponse(responseCode = "200", description = "Booking created successfully"),
                     @ApiResponse(responseCode = "400", description = "Invalid request or slot unavailable")
             })
-    @PostMapping("/create/{userId}")
+    @PostMapping("/create")
     public ResponseEntity<?> createBooking(
             @RequestBody List<Long> slotTimingIds, HttpServletRequest request) {
 
