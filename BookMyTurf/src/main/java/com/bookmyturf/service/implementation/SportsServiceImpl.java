@@ -1,6 +1,8 @@
     package com.bookmyturf.service.implementation;
 
+    import com.bookmyturf.constraints.SlotStatus;
     import com.bookmyturf.entity.*;
+    import com.bookmyturf.jparepository.BookingSlotRepository;
     import com.bookmyturf.jparepository.CategoryRepository;
     import com.bookmyturf.jparepository.LocationRepository;
     import com.bookmyturf.jparepository.SportsRepository;
@@ -14,8 +16,11 @@
 
     import java.io.IOException;
     import java.time.DayOfWeek;
+    import java.time.LocalDate;
+    import java.time.LocalDateTime;
     import java.time.LocalTime;
     import java.util.ArrayList;
+    import java.util.Comparator;
     import java.util.List;
     import java.util.Objects;
     import java.util.stream.Collectors;
@@ -27,6 +32,7 @@
         private final LocationRepository locationRepository;
         private final CategoryRepository categoryRepository;
         private final SportsRepository sportsRepository;
+        private final BookingSlotRepository bookingSlotRepository;
 
         @Override
         @PreAuthorize("hasAuthority('ADMIN') or hasAuthority('SUPER_ADMIN')")
@@ -236,18 +242,66 @@
             dto.setCategoryName(sport.getCategory() != null ? sport.getCategory().getName() : null);
             dto.setLocationName(sport.getLocation() != null ? sport.getLocation().getName() : null);
 
-            // ✅ Convert slot timings
-            List<SportDetailsResponseDTO.SlotTimingDTO> slotList = sport.getSlotTimings().stream().map(slot -> {
-                SportDetailsResponseDTO.SlotTimingDTO s = new SportDetailsResponseDTO.SlotTimingDTO();
-                s.setDayOfWeek(slot.getDayOfWeek().toString());
-                s.setStartTime(slot.getStartTime().toString());
-                s.setEndTime(slot.getEndTime().toString());
-                s.setPrice(slot.getPrice());
-                return s;
-            }).toList();
-            dto.setSlotTimings(slotList);
+            LocalDateTime now = LocalDateTime.now();
+            DayOfWeek today = now.getDayOfWeek();
+            LocalTime currentTime = now.toLocalTime();
 
-            // ✅ Convert media to Base64
+            // ✅ Create list of next 7 days (rolling window starting from today)
+            List<LocalDate> next7Days = new ArrayList<>();
+            for (int i = 0; i < 7; i++) {
+                next7Days.add(LocalDate.now().plusDays(i));
+            }
+
+            // ✅ Prepare weekly slots response
+            List<SportDetailsResponseDTO.DayWiseSlotsDTO> weekSlots = new ArrayList<>();
+
+            for (LocalDate date : next7Days) {
+                DayOfWeek day = date.getDayOfWeek();
+
+                List<SportDetailsResponseDTO.SlotTimingDTO> slotsForDay = sport.getSlotTimings().stream()
+                        .filter(slot -> slot.getDayOfWeek() == day)
+                        .filter(slot -> {
+                            // For today → only show future slots
+                            if (day == today) {
+                                return slot.getStartTime().isAfter(currentTime);
+                            }
+                            return true;
+                        })
+                        .sorted(Comparator.comparing(SlotTiming::getStartTime))
+                        .map(slot -> {
+                            SportDetailsResponseDTO.SlotTimingDTO s = new SportDetailsResponseDTO.SlotTimingDTO();
+                            s.setDayOfWeek(day.toString());
+                            s.setStartTime(slot.getStartTime().toString());
+                            s.setEndTime(slot.getEndTime().toString());
+                            s.setPrice(slot.getPrice());
+                            s.setSlotId(slot.getId());
+
+                            // ✅ Added status check (BOOKED / TEMP_BLOCKED)
+                            boolean isBlocked = bookingSlotRepository.existsBySlotTimingIdAndStatusIn(
+                                    slot.getId(),
+                                    List.of(SlotStatus.TEMP_BLOCKED, SlotStatus.BOOKED)
+                            );
+                            if (!isBlocked) {
+                                s.setStatus("AVAILABLE");
+                            } else {
+                                s.setStatus("UNAVAILABLE");
+                            }
+
+                            return s;
+                        })
+                        .toList();
+
+                SportDetailsResponseDTO.DayWiseSlotsDTO dayData = new SportDetailsResponseDTO.DayWiseSlotsDTO();
+                dayData.setDay(day.toString());
+                dayData.setDate(date.toString());
+                dayData.setSlots(slotsForDay);
+
+                weekSlots.add(dayData);
+            }
+
+            dto.setWeekSlots(weekSlots);
+
+            // ✅ Convert media files (unchanged)
             List<SportDetailsResponseDTO.MediaFileDTO> mediaList = sport.getMediaFiles().stream().map(media -> {
                 SportDetailsResponseDTO.MediaFileDTO m = new SportDetailsResponseDTO.MediaFileDTO();
                 m.setFileType(media.getFileType());

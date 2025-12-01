@@ -10,15 +10,24 @@ public class SportDetailsResponseDTO {
     private String description;
     private String categoryName;
     private String locationName;
-    private List<SlotTimingDTO> slotTimings;
+    private List<DayWiseSlotsDTO> weekSlots;   // ✅ Changed field
     private List<MediaFileDTO> mediaFiles;
 
     @Data
+    public static class DayWiseSlotsDTO {
+        private String day;               // e.g. "WEDNESDAY"
+        private String date;              // e.g. "2025-11-13"
+        private List<SlotTimingDTO> slots; // ✅ All slots for this day
+    }
+
+    @Data
     public static class SlotTimingDTO {
+        private Long slotId;         // ✅ Add this (SlotTiming primary key)
         private String dayOfWeek;
         private String startTime;
         private String endTime;
         private double price;
+        private String status;
     }
 
     @Data
