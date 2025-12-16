@@ -18,4 +18,7 @@ public interface SportsRepository extends JpaRepository<Sports,Long> {
             @Param("city") String city,
             @Param("categoryName") String categoryName
     );
+
+    @Query("SELECT COUNT(s.id) FROM Sports s WHERE s.location.admin.id = :adminId")
+    Long countSportsByAdmin(Long adminId);
 }

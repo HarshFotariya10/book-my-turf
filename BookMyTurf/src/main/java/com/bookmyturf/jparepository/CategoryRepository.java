@@ -13,5 +13,6 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
     @Query("SELECT DISTINCT c FROM Category c WHERE LOWER(c.location.city) = LOWER(:city)")
     List<Category> findDistinctByCityIgnoreCase(@Param("city") String city);
 
-
+    @Query("SELECT COUNT(c.id) FROM Category c WHERE c.location.admin.id = :adminId")
+    Long countCategoriesByAdmin(Long adminId);
 }

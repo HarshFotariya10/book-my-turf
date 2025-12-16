@@ -13,10 +13,7 @@ public class RegisterRequestModel {
     @NotBlank(message = "Email is required")
     String email;
 
-    @Pattern(
-            regexp = "^\\+?[1-9]\\d{1,14}$",
-            message = "Invalid mobile number. Use international format (e.g., +14155552671)"
-    )
+
     @NotBlank(message = "Contact number is required")
     private String contact;
 

@@ -52,7 +52,14 @@ public class AuthServiceImpl implements AuthService {
         user.setEmail(request.getEmail());
         user.setContact(request.getContact());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
-        user.setRole(Roles.valueOf(String.valueOf(request.getRole())));
+        user.setRole(request.getRole());
+
+        // Active status logic
+        if (request.getRole() == Roles.USER) {
+            user.setActive(true);  // normal user is active immediately
+        } else if (request.getRole() == Roles.ADMIN) {
+            user.setActive(false); // admin needs approval
+        }
 
         userRepo.save(user);
         otpCache.removeOtp(request.getEmail());
@@ -60,11 +67,16 @@ public class AuthServiceImpl implements AuthService {
         return user;
     }
 
+
     @Override
     public JwtResponse login(LoginRequestModel request) {
         User user = userRepo.findByEmail(request.getEmail())
                 .orElseThrow(() -> new RuntimeException("User not found"));
         String pass = passwordEncoder.encode("Admin@123");
+        if (!user.isActive()) {
+            throw new RuntimeException("User is not active. Please contact SUPER_ADMIN for approval.");
+        }
+
         if (!passwordEncoder.matches(request.getPassword(), pass)) {
             throw new RuntimeException("Invalid credentials");
         }

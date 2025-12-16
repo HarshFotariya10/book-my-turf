@@ -10,6 +10,7 @@ import com.bookmyturf.jparepository.BookingRepository;
 import com.bookmyturf.jparepository.BookingSlotRepository;
 import com.bookmyturf.jparepository.SlotTimingRepository;
 import com.bookmyturf.jparepository.UserJpaRepository;
+import com.bookmyturf.models.AdminBookingDTO;
 import com.bookmyturf.service.BookingService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +20,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -102,6 +104,44 @@ public class BookingServiceImpl implements BookingService {
                 bookingRepository.save(booking);
             }
         }
+    }
+    @Override
+    public List<AdminBookingDTO> getConfirmedBookingsForAdmin(Long adminId) {
+        List<Booking> bookings = bookingRepository.findConfirmedBookingsByAdmin(adminId, BookingStatus.CONFIRMED);
+
+        return bookings.stream()
+                .flatMap(b -> b.getBookingSlots().stream().map(bs ->
+                        new AdminBookingDTO(
+                                b.getId(),
+                                b.getUser().getId(), // userId added
+                                b.getUser().getFirstName() + " " + b.getUser().getLastName(),
+                                bs.getSlotTiming().getSports().getName(),
+                                bs.getSlotTiming().getSports().getLocation().getName(),
+                                b.getTotalAmount(),
+                                b.getCreatedAt()
+                        )
+                ))
+                .collect(Collectors.toList());
+    }
+
+
+    @Override
+    public List<AdminBookingDTO> getAllConfirmedBookingsForSuperAdmin() {
+        List<Booking> bookings = bookingRepository.findByStatus(BookingStatus.CONFIRMED);
+
+        return bookings.stream()
+                .flatMap(b -> b.getBookingSlots().stream().map(bs ->
+                        new AdminBookingDTO(
+                                b.getId(),
+                                b.getUser().getId(), // userId included
+                                b.getUser().getFirstName() + " " + b.getUser().getLastName(),
+                                bs.getSlotTiming().getSports().getName(),
+                                bs.getSlotTiming().getSports().getLocation().getName(),
+                                b.getTotalAmount(),
+                                b.getCreatedAt()
+                        )
+                ))
+                .collect(Collectors.toList());
     }
 
 

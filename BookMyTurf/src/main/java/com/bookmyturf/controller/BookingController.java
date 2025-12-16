@@ -2,6 +2,7 @@ package com.bookmyturf.controller;
 
 import com.bookmyturf.entity.Booking;
 import com.bookmyturf.exception.GlobalExceptionHandler;
+import com.bookmyturf.models.AdminBookingDTO;
 import com.bookmyturf.security.JwtUtil;
 import com.bookmyturf.service.BookingService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -59,4 +60,27 @@ public class BookingController {
         }
         return  jwtUtil.extractUserId(token);
     }
+    @GetMapping("/final-bookings")
+    public ResponseEntity<?> getFinalBookings(HttpServletRequest request) {
+
+        Long adminId = fetchUserIdFromToken(request);
+
+        List<AdminBookingDTO> response =
+                bookingService.getConfirmedBookingsForAdmin(adminId);
+        return ResponseEntity.ok(response);
+    }
+
+
+
+    @Operation(summary = "Get all confirmed bookings across application",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Bookings fetched successfully"),
+                    @ApiResponse(responseCode = "400", description = "Error fetching bookings")
+            })
+    @GetMapping("/super-admin/confirmed-bookings")
+    public ResponseEntity<?> getAllConfirmedBookingsForSuperAdmin() {
+        List<AdminBookingDTO> bookings = bookingService.getAllConfirmedBookingsForSuperAdmin();
+        return ResponseEntity.ok(bookings);
+    }
+
 }
